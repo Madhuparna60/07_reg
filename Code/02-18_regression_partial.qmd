@@ -52,7 +52,7 @@ Here is where we load the packages we will use.
 #| message: false
 #| warning: false
 
-#install.packages("nlraa")
+install.packages("nlraa")
 
 # Loading packages
 library(tidyverse) # for data wrangling and plotting
@@ -70,8 +70,9 @@ library(metrica) # for rmse
 Reading data and doing some light wrangling.  
 ```{r}
 #| message: false
-reg_dfw 
-
+reg_dfw <- read_csv("../Data/reg.csv") %>%
+clean_names() %>%
+mutate(rep = factor(rep))
 reg_dfw
 ```
 
@@ -94,15 +95,26 @@ summary(reg_dfw)
 Yield ranging from 7.8 to 15.6 Mg/ha.  
 
 ```{r reg exp boxplot}
+ggplot(data = reg_dfw, 
+       aes(x = sr_ksha,
+        y = yield_mgha))+
+
+  geom_point() +
+geom_line()
 
 ```
 
 What is going on with this boxplot?
 
 ```{r reg plot point + smooth}
-ggplot(reg_dfw, 
-       aes(x = sr_ksha, 
-           y = yield_mgha))
+ggplot(data = reg_dfw, 
+       aes(x = sr_ksha,
+        y = yield_mgha))+
+
+  geom_point() +
+
+geom_smooth()
+
 
 ```
 
@@ -117,7 +129,9 @@ Our goal is to then use that model to estimate the optimum seeding rate for this
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting
-mod1_int 
+mod1_int <- lmer(yield_mgha ~ (1|rep),
+                 data = reg_dfw
+                 )
 
 # Summary
 summary(mod1_int)
