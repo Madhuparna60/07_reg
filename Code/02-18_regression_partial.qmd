@@ -218,7 +218,7 @@ Solution:
 
 First, let's create an data set with all levels of seeding rate we want to get a prediction.  
 ```{r nd}
-nd <- data.frame(sr_ksha = seq(40, 120, 1))
+nd <- data.frame(sr_ksha = seq(40, 120, 1)) #1is the steps
 
 nd
 ```
@@ -258,10 +258,18 @@ ggplot(reg_dfw,
        aes(x = sr_ksha, 
            y = yield_mgha))+
   geom_point(size = 3, 
-             alpha = .7)+
+             alpha = .7) +
   geom_line(data = nd, 
             aes(y = mod1_yield_mgha), 
-            color = "forestgreen")
+            color = "forestgreen") +
+  geom_ribbon(data = nd,
+              aes(ymin = mod1_int_lcl,
+                  ymax = mod1_int_upl,
+                  x = sr_ksha
+                  ),
+              inherit.aes = FALSE,
+              alpha = .5
+              )
 ```
 
 Linear thoughts:
@@ -278,7 +286,9 @@ Next, let's try a linear (intercept + slope) model.
 options(contrasts = c("contr.sum", "contr.poly"))
 
 # Model fitting
-mod2_lin 
+mod2_lin <- lmer(yield_mgha ~ (1|rep) + sr_ksha,
+                 data = reg_dfw
+                 )
 
 # Summary
 summary(mod2_lin)
@@ -350,7 +360,9 @@ ggplot(mod2_lin_aug,
        aes(x = sr_ksha, 
            y = yield_mgha))+
   geom_point(size = 3, 
-             alpha = .7)
+             alpha = .7) +
+geom_line(aes(y = .fixed)) +
+  scale_x_continuous(limits = c(0, 120))
 ```
 
 Problem with the plot above:  
