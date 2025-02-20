@@ -206,7 +206,8 @@ ggplot(mod1_int_aug,
        aes(x = sr_ksha, 
            y = yield_mgha))+
   geom_point(size = 3, 
-             alpha = .7)
+             alpha = .7) +
+  geom_line(aes(y =.fixed))
 ```
 
 Problem with the plot above:  
@@ -217,14 +218,18 @@ Solution:
 
 First, let's create an data set with all levels of seeding rate we want to get a prediction.  
 ```{r nd}
-nd 
+nd <- data.frame(sr_ksha = seq(40, 120, 1))
 
 nd
 ```
 
 ```{r mod1 better final plot}
 # Creating predictions
-nd 
+nd <- nd %>%
+  mutate(mod1_yield_mgha = predict(mod1_int,
+                                   nd,
+                                  re.form = NA
+                                   ))
 # Creating function to bootstrap
 predict.fun <- function(mod) {
   predict(mod, 
