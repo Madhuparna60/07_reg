@@ -558,6 +558,7 @@ ggplot(reg_dfw,
 ```
 
 Now, which one fits the data best?
+
 Which one should we chose for finding the optimum, or predicting new data?  
 
 In our data set,   
@@ -575,9 +576,19 @@ After that, we can choose the model that best fit our data and use it to extract
 ```{r mod4 model}
 # Changing to sum-to-zero contrast
 options(contrasts = c("contr.sum", "contr.poly"))
-
+reg_dfw
 # Model fitting
-mod4_linp 
+mod4_linp <- nlme(yield_mgha ~ SSlinp(sr_ksha, a, b, xs),
+                  data = reg_dfw,
+                  random = list(rep = pdDiag(a + b+ xs ~1)),
+                  fixed = list(a ~ 1,
+                               b ~ 1,
+                               xs ~ 1
+                               ),
+                  start = c( a= 0,
+                             b = 0.3,
+                             xs = 100)
+                  ) 
 
 # Summary
 summary(mod4_linp)
@@ -621,12 +632,14 @@ Looking good.
 On this plot, looking for normality.
 
 ```{r mod4 QQ plot for Rep random effect}
-mod4_linp_randeff 
+mod4_linp_randeff <- ranef(mod4_linp) %>%
+  as.data.frame()
 
 ggplot(mod4_linp_randeff, 
        aes(sample = estimate))+
   stat_qq()+
-  stat_qq_line() 
+  stat_qq_line() + 
+  facet_wrap(~term)
 
 ```
 b and xs random estimates are so small that seem to be all zero.  
@@ -665,6 +678,7 @@ Solutions:
 ```{r mod4 better final plot}
 # Creating predictions
 nd <- nd %>%
+ 
   mutate(mod4_yield_mgha = predict(mod4_linp, 
                                    nd, 
                                    level = 0))  
@@ -691,6 +705,8 @@ nd <- nd %>%
 nd
 
 # Final plot
+
+
 ggplot(reg_dfw, 
        aes(x = sr_ksha, 
            y = yield_mgha))+
@@ -713,13 +729,36 @@ ggplot(reg_dfw,
 ## a) Visual comparison
 ```{r comparison plot}
 ggplot(reg_dfw, aes(x = sr_ksha, y = yield_mgha))+
-  geom_point(size = 4, alpha = .6)
-
+  geom_point(size = 4, alpha = .6) +
+  geom_line(data = nd,
+            aes(y=mod1_yield_mgha),
+            color = "forestgreen",
+            linewidth = 1.5
+            ) + 
+geom_line(data = nd,
+          aes(y = mod2_yield_mgha),
+          color = "blue",
+          linewidth = 1.5
+          ) +
+geom_line(data = nd,
+            aes(y=mod3_yield_mgha),
+            color = "purple",
+            linewidth = 1.5
+            ) + 
+  geom_line(data = nd,
+            aes(y=mod4_yield_mgha),
+            color = "red",
+            linewidth = 1.5
+            ) 
 
 ```
 ## Table comparison  
 ```{r}
-
+IC_tab(mod1_int,
+       mod2_lin,
+       mod3_quad,
+       mod4_linp
+       )
 ```
 Based on the above, model 4 (linear-plateau) had the lowest AIC and thus should be used to find the optimum level of seeding rate.  
 
@@ -727,14 +766,18 @@ Based on the above, model 4 (linear-plateau) had the lowest AIC and thus should 
 Because our best model was the linear-plateau, let's find its seeding rate that optimized yield.  
 
 ```{r optimum SR}
-
+mod4_linp %>%
+  intervals(which = "fixed")
 
 ```
 Based on the linear-plateau model, the level of seeding rate to optimize corn grain yield in this study was **73.47** thousand seeds/ha.  
 
 Now let's predict what was the yield at that seeding rate.  
 ```{r yield at optimum SR}
-
+predict(mod4_linp,
+        newdata = data.frame(sr_ksha = 73.48),
+        level = 0
+        )
 
 ```
 At the optimum seeding rate of **73.47** thousand seeds/ha, corn grain yield was **13.45** Mg/ha.
