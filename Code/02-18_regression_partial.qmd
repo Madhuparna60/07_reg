@@ -417,9 +417,13 @@ ggplot(reg_dfw,
 ```{r mod3 model}
 # Changing to sum-to-zero contrast
 options(contrasts = c("contr.sum", "contr.poly"))
-
+reg_dfw
 # Model fitting
-mod3_quad 
+mod3_quad <- lmer(yield_mgha ~ (1|rep) + 
+                  sr_ksha + I(sr_ksha^2),
+                  #add I for quadratic term
+                  data = reg_dfw
+                  )
 
 # Summary
 summary(mod3_quad)
